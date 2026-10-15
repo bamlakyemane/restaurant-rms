@@ -1,6 +1,36 @@
-import { Menu, Bell, UserCircle } from 'lucide-react'
+import { useState, useRef, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { Menu, Bell, LogOut, ChevronDown } from "lucide-react";
+import { useAuth } from "../../context/AuthContext";
+import Badge from "../ui/Badge";
 
 export default function Topbar({ onMenuClick, title }) {
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+  const [open, setOpen] = useState(false);
+  const menuRef = useRef(null);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const onClick = (e) => {
+      if (menuRef.current && !menuRef.current.contains(e.target))
+        setOpen(false);
+    };
+    document.addEventListener("mousedown", onClick);
+    return () => document.removeEventListener("mousedown", onClick);
+  }, []);
+
+  const handleLogout = () => {
+    logout();
+    navigate("/login", { replace: true });
+  };
+
+  const ROLE_COLORS = {
+    admin: "purple",
+    waiter: "blue",
+    chef: "yellow",
+  };
+
   return (
     <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-4 md:px-6">
       <div className="flex items-center gap-3">
@@ -15,15 +45,55 @@ export default function Topbar({ onMenuClick, title }) {
       </div>
 
       <div className="flex items-center gap-4">
-        <button className="text-gray-500 hover:text-gray-800 relative" aria-label="Notifications">
+        <button
+          className="text-gray-500 hover:text-gray-800 relative"
+          aria-label="Notifications"
+        >
           <Bell size={20} />
           <span className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full" />
         </button>
-        <div className="flex items-center gap-2">
-          <UserCircle size={26} className="text-gray-500" />
-          <span className="hidden sm:block text-sm text-gray-700">Guest</span>
-        </div>
+
+        {user && (
+          <div className="relative" ref={menuRef}>
+            <button
+              onClick={() => setOpen((o) => !o)}
+              className="flex items-center gap-2 pl-2 pr-1 py-1 rounded-lg hover:bg-gray-100 transition"
+            >
+              <span className="text-xl">{user.avatar || "👤"}</span>
+              <div className="hidden sm:block text-left">
+                <p className="text-sm font-medium text-gray-800 leading-tight">
+                  {user.name}
+                </p>
+                <Badge
+                  color={ROLE_COLORS[user.role] || "gray"}
+                  className="mt-0.5"
+                >
+                  {user.role}
+                </Badge>
+              </div>
+              <ChevronDown size={16} className="text-gray-500" />
+            </button>
+
+            {open && (
+              <div className="absolute right-0 top-full mt-2 w-56 bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden z-20">
+                <div className="px-4 py-3 border-b border-gray-100">
+                  <p className="text-sm font-medium text-gray-800">
+                    {user.name}
+                  </p>
+                  <p className="text-xs text-gray-500">{user.email}</p>
+                </div>
+                <button
+                  onClick={handleLogout}
+                  className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition"
+                >
+                  <LogOut size={16} />
+                  Sign out
+                </button>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </header>
-  )
+  );
 }

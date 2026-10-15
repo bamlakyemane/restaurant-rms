@@ -6,3 +6,11 @@
   --color-brand-600: #ea580c;
   --color-brand-700: #c2410c;
 }
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}

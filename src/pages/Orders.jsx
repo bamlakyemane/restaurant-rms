@@ -1,7 +1,6 @@
-import { useEffect, useMemo, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useMemo, useState } from "react";
 import { ClipboardList, Plus } from "lucide-react";
-import { Button, Card, EmptyState, PageHeader, Select } from "../components/ui";
+import { Button, Card, EmptyState, PageHeader } from "../components/ui";
 import ConfirmModal from "../components/ui/ConfirmModal";
 import OrderCard from "../components/features/OrderCard";
 import OrderDetailDrawer from "../components/features/OrderDetailDrawer";
@@ -20,11 +19,8 @@ const TABS = [
 
 export default function Orders() {
   const { user } = useAuth();
-  const [params, setParams] = useSearchParams();
-
   const {
     orders,
-    tables,
     menu,
     loading,
     saving,
@@ -35,33 +31,10 @@ export default function Orders() {
   } = useOrders();
 
   const [tab, setTab] = useState("active");
-  const [tableFilter, setTableFilter] = useState("all");
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [newOpen, setNewOpen] = useState(false);
   const [canceling, setCanceling] = useState(null);
-  const preselectedTableId = params.get("tableId") || "";
 
-  // Modal is open if the user clicked "New order" OR they came from a table deep-link
-  const isNewOrderOpen = newOpen || !!preselectedTableId;
-  /*
-  // Auto-open New Order modal if coming from Tables page
-  useEffect(() => {
-    if (preselectedTableId) setNewOpen(true);
-  }, [preselectedTableId]);
-*/
-
-  useEffect(() => {
-    console.log("selectedOrder:", selectedOrder);
-    console.log("selectedFresh:", selectedFresh);
-    console.log("drawer open:", !!selectedFresh);
-  }, [selectedOrder, selectedFresh]);
-
-  const tableById = useMemo(
-    () => Object.fromEntries(tables.map((t) => [t.id, t])),
-    [tables],
-  );
-
-  // Filter logic
   const visibleOrders = useMemo(() => {
     return orders
       .filter((o) => {
@@ -70,9 +43,8 @@ export default function Orders() {
         }
         return o.status === tab;
       })
-      .filter((o) => tableFilter === "all" || o.tableId === tableFilter)
       .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-  }, [orders, tab, tableFilter]);
+  }, [orders, tab]);
 
   const tabCounts = useMemo(() => {
     const c = {
@@ -90,17 +62,12 @@ export default function Orders() {
     return c;
   }, [orders]);
 
-  // Keep the drawer's selected order fresh
   const selectedFresh = selectedOrder
     ? orders.find((o) => o.id === selectedOrder.id)
     : null;
 
-  // Handlers
-  const handleCreate = async ({ tableId, items }) => {
-    await createOrder({ tableId, waiterId: user?.id, items });
-    // clear ?tableId query param
-    params.delete("tableId");
-    setParams(params, { replace: true });
+  const handleCreate = async ({ items }) => {
+    await createOrder({ waiterId: user?.id, items });
   };
 
   const handleSendToKitchen = async () => {
@@ -127,7 +94,7 @@ export default function Orders() {
       />
 
       {/* Tabs */}
-      <div className="flex flex-wrap gap-2 mb-4">
+      <div className="flex flex-wrap gap-2 mb-6">
         {TABS.map((t) => (
           <button
             key={t.key}
@@ -151,26 +118,6 @@ export default function Orders() {
         ))}
       </div>
 
-      {/* Table filter */}
-      <Card className="mb-6">
-        <div className="flex items-center gap-3">
-          <span className="text-sm text-gray-600">Filter by table:</span>
-          <Select
-            value={tableFilter}
-            onChange={(e) => setTableFilter(e.target.value)}
-            className="max-w-xs"
-          >
-            <option value="all">All tables</option>
-            {tables.map((t) => (
-              <option key={t.id} value={t.id}>
-                Table #{t.number} ({t.zone})
-              </option>
-            ))}
-          </Select>
-        </div>
-      </Card>
-
-      {/* Orders list */}
       {loading ? (
         <div className="space-y-3">
           {Array.from({ length: 4 }).map((_, i) => (
@@ -185,11 +132,7 @@ export default function Orders() {
           <EmptyState
             icon={ClipboardList}
             title={`No ${tab === "active" ? "active" : tab} orders`}
-            description={
-              tab === "active"
-                ? "Create an order to get started."
-                : `Orders marked "${tab}" will appear here.`
-            }
+            description="Create an order to get started."
             action={
               tab === "active" && (
                 <Button icon={Plus} onClick={() => setNewOpen(true)}>
@@ -202,30 +145,16 @@ export default function Orders() {
       ) : (
         <div className="space-y-3">
           {visibleOrders.map((o) => (
-            <OrderCard
-              key={o.id}
-              order={o}
-              table={tableById[o.tableId]}
-              onClick={setSelectedOrder}
-            />
+            <OrderCard key={o.id} order={o} onClick={setSelectedOrder} />
           ))}
         </div>
       )}
 
-      {/* Modals */}
       <NewOrderModal
-        key={isNewOrderOpen ? preselectedTableId || "new" : "closed"}
-        open={isNewOrderOpen}
-        onClose={() => {
-          setNewOpen(false);
-          if (preselectedTableId) {
-            params.delete("tableId");
-            setParams(params, { replace: true });
-          }
-        }}
-        tables={tables}
+        key={newOpen ? "open" : "closed"}
+        open={newOpen}
+        onClose={() => setNewOpen(false)}
         menu={menu}
-        preselectedTableId={preselectedTableId}
         onSubmit={handleCreate}
         saving={saving}
       />
@@ -234,7 +163,6 @@ export default function Orders() {
         open={!!selectedFresh}
         onClose={() => setSelectedOrder(null)}
         order={selectedFresh}
-        table={selectedFresh ? tableById[selectedFresh.tableId] : null}
         saving={saving}
         onUpdateItemStatus={updateItemStatus}
         onSendToKitchen={handleSendToKitchen}
@@ -246,7 +174,7 @@ export default function Orders() {
         onClose={() => setCanceling(null)}
         onConfirm={handleCancel}
         title={`Cancel order #${canceling?.id.slice(-4)}?`}
-        description="The order will be marked cancelled and the table freed."
+        description="The order will be marked cancelled."
         confirmLabel="Cancel order"
         cancelLabel="Keep it"
         loading={saving}

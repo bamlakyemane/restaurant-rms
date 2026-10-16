@@ -1,4 +1,4 @@
-import { Clock, Users, ChevronRight, Receipt } from "lucide-react";
+import { Clock, ChevronRight, Receipt } from "lucide-react";
 import Badge from "../ui/Badge";
 import { formatCurrency, minutesAgo, orderTotal } from "../../utils/formatters";
 
@@ -11,7 +11,7 @@ const STATUS_COLOR = {
   cancelled: "red",
 };
 
-export default function OrderCard({ order, table, onClick }) {
+export default function OrderCard({ order, onClick }) {
   const total = orderTotal(order);
   const itemCount = order.items.reduce((n, it) => n + it.qty, 0);
   const pendingCount = order.items.filter(
@@ -19,11 +19,19 @@ export default function OrderCard({ order, table, onClick }) {
   ).length;
 
   return (
-    <button
-      onClick={onClick}
-      className="w-full text-left bg-white rounded-xl border border-gray-200 hover:border-brand-300 hover:shadow-sm transition p-4 flex items-center gap-4"
+    <div
+      role="button"
+      tabIndex={0}
+      onClick={() => onClick(order)}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onClick(order);
+        }
+      }}
+      className="w-full text-left bg-white rounded-xl border border-gray-200 hover:border-brand-300 hover:shadow-sm transition p-4 flex items-center gap-4 cursor-pointer"
     >
-      {/* Left: order number + table */}
+      {/* Left: order number */}
       <div className="w-16 shrink-0 text-center">
         <p className="text-xs text-gray-400">Order</p>
         <p className="text-lg font-bold text-gray-800">#{order.id.slice(-4)}</p>
@@ -34,9 +42,6 @@ export default function OrderCard({ order, table, onClick }) {
       {/* Middle: meta */}
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 mb-1">
-          <span className="font-medium text-gray-800 truncate">
-            {table ? `Table #${table.number}` : "Takeaway"}
-          </span>
           <Badge color={STATUS_COLOR[order.status] ?? "gray"}>
             {order.status}
           </Badge>
@@ -47,8 +52,8 @@ export default function OrderCard({ order, table, onClick }) {
           <span className="flex items-center gap-1">
             <Clock size={12} /> {minutesAgo(order.createdAt)}m ago
           </span>
-          <span className="flex items-center gap-1">
-            <Users size={12} /> {itemCount} item{itemCount !== 1 ? "s" : ""}
+          <span>
+            {itemCount} item{itemCount !== 1 ? "s" : ""}
           </span>
         </div>
       </div>
@@ -64,6 +69,6 @@ export default function OrderCard({ order, table, onClick }) {
         </div>
         <ChevronRight size={18} className="text-gray-400" />
       </div>
-    </button>
+    </div>
   );
 }

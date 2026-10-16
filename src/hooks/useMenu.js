@@ -20,8 +20,25 @@ export function useMenu() {
   }, []);
 
   useEffect(() => {
-    load();
-  }, [load]);
+    let cancelled = false;
+
+    const fetchData = async () => {
+      try {
+        const items = await api.getMenu();
+        if (cancelled) return;
+        setMenu(items);
+      } catch {
+        if (!cancelled) toast.error("Failed to load menu");
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
+
+    fetchData();
+    return () => {
+      cancelled = true;
+    };
+  }, []); // ⬅ empty deps; `load` is still exported for manual reloads
 
   const createItem = async (payload) => {
     setSaving(true);

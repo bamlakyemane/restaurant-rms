@@ -1,12 +1,4 @@
-import { useNavigate } from "react-router-dom";
-import {
-  ChefHat,
-  CheckCircle2,
-  XCircle,
-  Receipt,
-  Clock,
-  Users,
-} from "lucide-react";
+import { ChefHat, CheckCircle2, XCircle, Clock } from "lucide-react";
 import Drawer from "../ui/Drawer";
 import Button from "../ui/Button";
 import Badge from "../ui/Badge";
@@ -23,14 +15,11 @@ export default function OrderDetailDrawer({
   open,
   onClose,
   order,
-  table,
   saving,
   onUpdateItemStatus,
   onSendToKitchen,
   onCancel,
 }) {
-  const navigate = useNavigate();
-
   if (!order) return null;
 
   const isActive = !["paid", "cancelled"].includes(order.status);
@@ -55,16 +44,6 @@ export default function OrderDetailDrawer({
             </Button>
           )}
 
-          {isActive && allServed && (
-            <Button
-              variant="success"
-              icon={Receipt}
-              onClick={() => navigate(`/billing?orderId=${order.id}`)}
-            >
-              Go to billing
-            </Button>
-          )}
-
           {isActive && (
             <Button
               variant="danger"
@@ -80,9 +59,6 @@ export default function OrderDetailDrawer({
     >
       {/* Meta */}
       <div className="flex flex-wrap items-center gap-3 mb-5">
-        <Badge color="brand">
-          {table ? `Table #${table.number}` : "Takeaway"}
-        </Badge>
         <Badge
           color={
             order.status === "paid"
@@ -100,10 +76,6 @@ export default function OrderDetailDrawer({
         </Badge>
         <span className="text-xs text-gray-500 flex items-center gap-1">
           <Clock size={12} /> {minutesAgo(order.createdAt)} min ago
-        </span>
-        <span className="text-xs text-gray-500 flex items-center gap-1">
-          <Users size={12} /> {order.items.reduce((n, it) => n + it.qty, 0)}{" "}
-          items
         </span>
       </div>
 
@@ -173,7 +145,6 @@ export default function OrderDetailDrawer({
           </div>
         ))}
 
-        {/* Total */}
         <div className="px-3 py-3 flex items-center justify-between bg-gray-50">
           <span className="text-sm font-medium text-gray-700">Total</span>
           <span className="text-base font-bold text-gray-900">
@@ -182,21 +153,11 @@ export default function OrderDetailDrawer({
         </div>
       </div>
 
-      {/* Actions */}
-      {isActive && (
-        <div className="space-y-2">
-          {!allServed && (
-            <p className="text-xs text-gray-500 text-center">
-              Mark all items <span className="font-medium">served</span> before
-              billing.
-            </p>
-          )}
-          {order.status === "paid" && (
-            <p className="text-xs text-emerald-600 text-center">
-              This order has been paid.
-            </p>
-          )}
-        </div>
+      {isActive && !allServed && (
+        <p className="text-xs text-gray-500 text-center">
+          Mark all items <span className="font-medium">served</span> to complete
+          the order.
+        </p>
       )}
     </Drawer>
   );

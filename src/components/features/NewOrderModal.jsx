@@ -8,33 +8,13 @@ import { formatCurrency } from "../../utils/formatters";
 export default function NewOrderModal({
   open,
   onClose,
-  tables,
   menu,
-  preselectedTableId,
   onSubmit,
   saving,
 }) {
-  const [tableId, setTableId] = useState("");
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("All");
-  const [cart, setCart] = useState([]); // [{ menuItemId, name, price, qty, notes }]
-
-  /*
-  // Reset when modal opens
-  useEffect(() => {
-    if (!open) return;
-    setTableId(preselectedTableId || "");
-    setSearch("");
-    setCategory("All");
-    setCart([]);
-  }, [open, preselectedTableId]);
-*/
-  // Available tables (free only, unless the preselected one is already chosen)
-  const freeTables = useMemo(
-    () =>
-      tables.filter((t) => t.status === "free" || t.id === preselectedTableId),
-    [tables, preselectedTableId],
-  );
+  const [cart, setCart] = useState([]);
 
   const categories = useMemo(() => {
     const set = new Set(menu.map((m) => m.category));
@@ -51,7 +31,6 @@ export default function NewOrderModal({
     });
   }, [menu, search, category]);
 
-  // Cart helpers
   const addToCart = (item) => {
     setCart((prev) => {
       const existing = prev.find((c) => c.menuItemId === item.id);
@@ -94,12 +73,12 @@ export default function NewOrderModal({
   };
 
   const total = cart.reduce((sum, c) => sum + c.price * c.qty, 0);
-  const canSubmit = tableId && cart.length > 0;
+  const canSubmit = cart.length > 0;
 
   const handleSubmit = async () => {
     if (!canSubmit) return;
     try {
-      await onSubmit({ tableId, items: cart });
+      await onSubmit({ items: cart });
       onClose();
     } catch {
       /* toast shown by hook */
@@ -143,44 +122,30 @@ export default function NewOrderModal({
       <div className="grid lg:grid-cols-5 gap-5">
         {/* LEFT: Menu browser */}
         <div className="lg:col-span-3">
-          <div className="space-y-3 mb-4">
+          <div className="flex gap-2 mb-4">
+            <div className="relative flex-1">
+              <Search
+                size={16}
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+              />
+              <Input
+                placeholder="Search dishes…"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="pl-9"
+              />
+            </div>
             <Select
-              value={tableId}
-              onChange={(e) => setTableId(e.target.value)}
+              value={category}
+              onChange={(e) => setCategory(e.target.value)}
+              className="w-36"
             >
-              <option value="">Select a table…</option>
-              {freeTables.map((t) => (
-                <option key={t.id} value={t.id}>
-                  Table #{t.number} — {t.seats} seats ({t.zone})
+              {categories.map((c) => (
+                <option key={c} value={c}>
+                  {c}
                 </option>
               ))}
             </Select>
-
-            <div className="flex gap-2">
-              <div className="relative flex-1">
-                <Search
-                  size={16}
-                  className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
-                />
-                <Input
-                  placeholder="Search dishes…"
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  className="pl-9"
-                />
-              </div>
-              <Select
-                value={category}
-                onChange={(e) => setCategory(e.target.value)}
-                className="w-36"
-              >
-                {categories.map((c) => (
-                  <option key={c} value={c}>
-                    {c}
-                  </option>
-                ))}
-              </Select>
-            </div>
           </div>
 
           <div className="max-h-[420px] overflow-y-auto pr-1 space-y-2">
@@ -191,6 +156,7 @@ export default function NewOrderModal({
             ) : (
               filteredMenu.map((m) => (
                 <button
+                  type="button"
                   key={m.id}
                   onClick={() => addToCart(m)}
                   className="w-full flex items-center gap-3 p-3 rounded-lg border border-gray-200 hover:border-brand-300 hover:bg-brand-50/40 transition text-left"
@@ -223,6 +189,7 @@ export default function NewOrderModal({
               </h3>
               {cart.length > 0 && (
                 <button
+                  type="button"
                   onClick={() => setCart([])}
                   className="text-xs text-red-500 hover:text-red-600"
                 >
@@ -252,6 +219,7 @@ export default function NewOrderModal({
                         </p>
                       </div>
                       <button
+                        type="button"
                         onClick={() => removeFromCart(c.menuItemId)}
                         className="text-gray-400 hover:text-red-500 transition"
                       >
@@ -262,6 +230,7 @@ export default function NewOrderModal({
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-1">
                         <button
+                          type="button"
                           onClick={() => changeQty(c.menuItemId, -1)}
                           className="w-7 h-7 rounded-md bg-gray-100 hover:bg-gray-200 flex items-center justify-center"
                         >
@@ -271,6 +240,7 @@ export default function NewOrderModal({
                           {c.qty}
                         </span>
                         <button
+                          type="button"
                           onClick={() => changeQty(c.menuItemId, 1)}
                           className="w-7 h-7 rounded-md bg-gray-100 hover:bg-gray-200 flex items-center justify-center"
                         >

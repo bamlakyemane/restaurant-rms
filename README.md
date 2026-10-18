@@ -1,16 +1,34 @@
-# React + Vite
+# 🍽️ Restaurant RMS
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A modern Restaurant Management System built with React 19, Vite, and Tailwind CSS v4.
 
-Currently, two official plugins are available:
+## ✨ Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- 🔐 **Role-based auth** — Admin / Waiter / Chef with protected routes
+- 📊 **Dashboard** — KPIs, revenue charts, top sellers, live activity
+- 🍕 **Menu management** — Full CRUD with search, filters, availability toggle
+- 🧾 **Order management** — Create, track, and manage orders
+- 👨‍🍳 **Kitchen Display** — Real-time ticket board with item-level tracking
+- 📅 **Reservations** — Bookings with status workflow (confirmed / seated / cancelled)
+- 👥 **Staff management** — Add, edit, remove team members (admin only)
+- 🌗 **Dark mode** — Persisted theme preference
+- 📱 **Responsive** — Works on desktop, tablet, and mobile
 
-## React Compiler
+## 🛠️ Tech Stack
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- React 19 + Vite
+- Tailwind CSS v4
+- React Router v6
+- Context API (auth + theme)
+- localStorage (fake backend via `services/api.js`)
+- Recharts (analytics)
+- lucide-react (icons)
+- react-hot-toast (notifications)
 
-## Expanding the ESLint configuration
+## 🚀 Getting Started
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+```bash
+git clone https://github.com/YOUR_USERNAME/restaurant-rms.git
+cd restaurant-rms
+npm install
+npm run dev

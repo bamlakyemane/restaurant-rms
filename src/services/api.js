@@ -56,6 +56,49 @@ export const api = {
     return safe;
   },
 
+  async createUser(payload) {
+    await delay();
+    const users = load(KEYS.USERS, seedUsers);
+    const exists = users.some(
+      (u) => u.email.toLowerCase() === payload.email.toLowerCase(),
+    );
+    if (exists) throw new Error("Email already exists");
+    const newUser = { ...payload, id: uid("u") };
+    save(KEYS.USERS, [...users, newUser]);
+    const safe = { ...newUser };
+    delete safe.pin;
+    return safe;
+  },
+
+  async updateUser(id, patch) {
+    await delay();
+    const users = load(KEYS.USERS, seedUsers);
+    // If email is changing, ensure it's not taken by someone else
+    if (patch.email) {
+      const taken = users.some(
+        (u) =>
+          u.id !== id && u.email.toLowerCase() === patch.email.toLowerCase(),
+      );
+      if (taken) throw new Error("Email already in use");
+    }
+    const next = users.map((u) => (u.id === id ? { ...u, ...patch } : u));
+    save(KEYS.USERS, next);
+    const updated = next.find((u) => u.id === id);
+    const safe = { ...updated };
+    delete safe.pin;
+    return safe;
+  },
+
+  async deleteUser(id) {
+    await delay();
+    const users = load(KEYS.USERS, seedUsers);
+    save(
+      KEYS.USERS,
+      users.filter((u) => u.id !== id),
+    );
+    return true;
+  },
+
   // ---- MENU ----
   async getMenu() {
     await delay();

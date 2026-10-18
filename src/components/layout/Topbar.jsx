@@ -3,12 +3,15 @@ import { useNavigate } from "react-router-dom";
 import { Menu, Bell, LogOut, ChevronDown } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import Badge from "../ui/Badge";
+import { useTheme } from "../../hooks/useTheme";
+import { Sun, Moon } from "lucide-react";
 
 export default function Topbar({ onMenuClick, title }) {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const menuRef = useRef(null);
+  const { theme, toggle } = useTheme();
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -44,15 +47,24 @@ export default function Topbar({ onMenuClick, title }) {
         <h1 className="text-lg font-semibold text-gray-800">{title}</h1>
       </div>
 
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-2">
+        {/* Theme toggle */}
         <button
-          className="text-gray-500 hover:text-gray-800 relative"
-          aria-label="Notifications"
+          onClick={toggle}
+          className="w-9 h-9 flex items-center justify-center rounded-lg text-gray-500 hover:bg-gray-100 transition"
+          aria-label="Toggle theme"
         >
-          <Bell size={20} />
-          <span className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full" />
+          {theme === "dark" ? <Sun size={18} /> : <Moon size={18} />}
         </button>
 
+        {/* Notifications */}
+        <button
+          className="w-9 h-9 flex items-center justify-center rounded-lg text-gray-500 hover:bg-gray-100 transition relative"
+          aria-label="Notifications"
+        >
+          <Bell size={18} />
+          <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full" />
+        </button>
         {user && (
           <div className="relative" ref={menuRef}>
             <button

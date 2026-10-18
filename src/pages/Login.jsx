@@ -23,8 +23,15 @@ export default function Login() {
   const onSubmit = async (e) => {
     e.preventDefault();
     try {
-      await login(email, pin);
-      navigate(from, { replace: true });
+      const loggedUser = await login(email, pin);
+
+      // Determine where to send them based on role
+      let destination = "/";
+      if (loggedUser.role === "chef") destination = "/kitchen";
+      if (loggedUser.role === "waiter") destination = "/orders";
+
+      // If they were trying to access a specific page before login, send them there
+      navigate(from !== "/" ? from : destination, { replace: true });
     } catch {
       /* toast already shown */
     }
@@ -41,8 +48,10 @@ export default function Login() {
         {/* Left: brand + demo accounts */}
         <div className="hidden md:block">
           <div className="text-5xl mb-3">🍽️</div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">{APP_NAME}</h1>
-          <p className="text-gray-600 mb-6">
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2">
+            {APP_NAME}
+          </h1>
+          <p className="text-gray-600 dark:text-gray-400 mb-6">
             Sign in to manage orders and your team.
           </p>
 

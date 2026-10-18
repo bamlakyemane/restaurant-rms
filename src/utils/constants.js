@@ -15,7 +15,12 @@ export const ROLES = {
 
 // `roles` = who can see this nav item (empty = everyone)
 export const NAV_ITEMS = [
-  { label: "Dashboard", path: "/", icon: LayoutDashboard },
+  {
+    label: "Dashboard",
+    path: "/",
+    icon: LayoutDashboard,
+    roles: [ROLES.ADMIN],
+  },
   { label: "Menu", path: "/menu", icon: UtensilsCrossed },
   { label: "Orders", path: "/orders", icon: ClipboardList },
   {
@@ -24,7 +29,6 @@ export const NAV_ITEMS = [
     icon: ChefHat,
     roles: [ROLES.ADMIN, ROLES.CHEF],
   },
-
   {
     label: "Reservations",
     path: "/reservations",

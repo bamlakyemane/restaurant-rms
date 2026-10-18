@@ -10,7 +10,6 @@ import Reservations from "../pages/Reservations";
 import Staff from "../pages/Staff";
 import NotFound from "../pages/NotFound";
 import Login from "../pages/Login";
-
 import { ROLES } from "../utils/constants";
 
 export default function AppRoutes() {
@@ -27,7 +26,14 @@ export default function AppRoutes() {
           </ProtectedRoute>
         }
       >
-        <Route index element={<Dashboard />} />
+        <Route
+          index
+          element={
+            <RoleRoute roles={[ROLES.ADMIN]}>
+              <Dashboard />
+            </RoleRoute>
+          }
+        />
         <Route path="menu" element={<Menu />} />
         <Route path="orders" element={<Orders />} />
 

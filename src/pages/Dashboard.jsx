@@ -1,142 +1,261 @@
-import { useEffect, useState } from "react";
-import { api } from "../services/api";
-import { formatCurrency, orderTotal, minutesAgo } from "../utils/formatters";
-import { Card, CardHeader, Badge, PageHeader } from "../components/ui";
+import {
+  ShoppingBag,
+  DollarSign,
+  TrendingUp,
+  ChefHat,
+  RefreshCw,
+  UtensilsCrossed,
+  Flame,
+} from "lucide-react";
+import {
+  Card,
+  CardHeader,
+  Badge,
+  PageHeader,
+  Button,
+  EmptyState,
+} from "../components/ui";
+import StatCard from "../components/features/StatCard";
+import RevenueChart from "../components/features/RevenueChart";
+import StatusDonut from "../components/features/StatusDonut";
+import { useDashboard } from "../hooks/useDashboard";
+import { formatCurrency, minutesAgo, orderTotal } from "../utils/formatters";
+
+const RANGE_TABS = [
+  { key: "today", label: "Today" },
+  { key: "week", label: "This week" },
+  { key: "all", label: "All time" },
+];
+
+const STATUS_COLOR = {
+  pending: "gray",
+  preparing: "yellow",
+  ready: "blue",
+  served: "green",
+  paid: "purple",
+  cancelled: "red",
+};
 
 export default function Dashboard() {
-  const [menu, setMenu] = useState([]);
-  const [orders, setOrders] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    let cancelled = false;
-
-    const fetchData = async () => {
-      try {
-        const [m, o] = await Promise.all([api.getMenu(), api.getOrders()]);
-        if (cancelled) return;
-        setMenu(m);
-        setOrders(o);
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    };
-
-    fetchData();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+  const {
+    loading,
+    lastRefresh,
+    range,
+    setRange,
+    kpis,
+    revenue7d,
+    statusBreakdown,
+    topSellers,
+    recent,
+    reload,
+    menuCount,
+  } = useDashboard();
 
   if (loading) {
     return (
       <div className="space-y-4">
-        <div className="h-10 w-48 bg-gray-100 rounded-lg animate-pulse" />
-        <div className="grid md:grid-cols-3 gap-4">
-          {Array.from({ length: 3 }).map((_, i) => (
+        <div className="grid md:grid-cols-4 gap-4">
+          {Array.from({ length: 4 }).map((_, i) => (
             <div
               key={i}
               className="h-28 bg-gray-100 rounded-xl animate-pulse"
             />
           ))}
         </div>
+        <div className="grid lg:grid-cols-3 gap-4">
+          <div className="h-80 bg-gray-100 rounded-xl animate-pulse lg:col-span-2" />
+          <div className="h-80 bg-gray-100 rounded-xl animate-pulse" />
+        </div>
       </div>
     );
   }
 
-  const activeOrders = orders.filter(
-    (o) => !["paid", "cancelled"].includes(o.status),
-  );
-  const todayRevenue = orders
-    .filter((o) => o.status !== "cancelled")
-    .reduce((sum, o) => sum + orderTotal(o), 0);
-
   return (
     <>
-      <PageHeader title="Dashboard" subtitle="Overview of today's activity" />
+      <PageHeader
+        title="Dashboard"
+        subtitle={`Updated ${new Date(lastRefresh).toLocaleTimeString()}`}
+        action={
+          <div className="flex items-center gap-2">
+            <div className="flex bg-gray-100 rounded-lg p-0.5">
+              {RANGE_TABS.map((r) => (
+                <button
+                  key={r.key}
+                  onClick={() => setRange(r.key)}
+                  className={`
+                    px-3 py-1.5 rounded-md text-xs font-medium transition
+                    ${
+                      range === r.key
+                        ? "bg-white text-gray-900 shadow-sm"
+                        : "text-gray-600 hover:text-gray-900"
+                    }
+                  `}
+                >
+                  {r.label}
+                </button>
+              ))}
+            </div>
+            <Button
+              variant="secondary"
+              size="sm"
+              icon={RefreshCw}
+              onClick={reload}
+            >
+              Refresh
+            </Button>
+          </div>
+        }
+      />
 
-      <div className="grid md:grid-cols-3 gap-4 mb-6">
-        <Card>
-          <p className="text-sm text-gray-500">Menu items</p>
-          <p className="text-3xl font-bold text-gray-800">{menu.length}</p>
-          <p className="text-xs text-gray-400 mt-1">
-            {menu.filter((m) => m.available).length} available
-          </p>
+      {/* KPI row */}
+      <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <StatCard
+          label="Orders"
+          value={kpis.count}
+          hint={
+            range === "today"
+              ? "Today"
+              : range === "week"
+                ? "Last 7 days"
+                : "All time"
+          }
+          icon={ShoppingBag}
+          color="brand"
+        />
+        <StatCard
+          label="Revenue"
+          value={formatCurrency(kpis.revenue)}
+          hint={
+            range === "today"
+              ? "Today"
+              : range === "week"
+                ? "Last 7 days"
+                : "All time"
+          }
+          icon={DollarSign}
+          color="green"
+        />
+        <StatCard
+          label="Avg. ticket"
+          value={formatCurrency(kpis.avg)}
+          hint="Per order"
+          icon={TrendingUp}
+          color="blue"
+        />
+        <StatCard
+          label="Active tickets"
+          value={kpis.active}
+          hint={`${menuCount} menu items`}
+          icon={ChefHat}
+          color="yellow"
+        />
+      </div>
+
+      {/* Charts row */}
+      <div className="grid lg:grid-cols-3 gap-4 mb-6">
+        <Card className="lg:col-span-2">
+          <CardHeader title="Revenue — last 7 days" subtitle="Total per day" />
+          <RevenueChart data={revenue7d} />
         </Card>
 
         <Card>
-          <p className="text-sm text-gray-500">Active orders</p>
-          <p className="text-3xl font-bold text-gray-800">
-            {activeOrders.length}
-          </p>
-          <p className="text-xs text-gray-400 mt-1">
-            {orders.filter((o) => o.status === "pending").length} pending
-          </p>
-        </Card>
-
-        <Card>
-          <p className="text-sm text-gray-500">Total revenue (all orders)</p>
-          <p className="text-3xl font-bold text-gray-800">
-            {formatCurrency(todayRevenue)}
-          </p>
-          <p className="text-xs text-gray-400 mt-1">
-            across {orders.length} order{orders.length !== 1 ? "s" : ""}
-          </p>
+          <CardHeader
+            title="Order status"
+            subtitle={`${statusBreakdown.reduce((s, d) => s + d.value, 0)} total`}
+          />
+          <StatusDonut data={statusBreakdown} />
         </Card>
       </div>
 
-      <Card>
-        <CardHeader title="Recent orders" subtitle="Latest activity" />
-        {orders.length === 0 ? (
-          <p className="text-sm text-gray-400 text-center py-8">
-            No orders yet. Create one from the Orders page.
-          </p>
-        ) : (
-          <div className="space-y-3">
-            {[...orders]
-              .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
-              .slice(0, 5)
-              .map((o) => (
+      {/* Bottom row */}
+      <div className="grid lg:grid-cols-2 gap-4">
+        {/* Top sellers */}
+        <Card>
+          <CardHeader
+            title="Top selling dishes"
+            subtitle={
+              range === "today"
+                ? "Today"
+                : range === "week"
+                  ? "Last 7 days"
+                  : "All time"
+            }
+            action={<Flame size={16} className="text-brand-500" />}
+          />
+          {topSellers.length === 0 ? (
+            <EmptyState
+              icon={UtensilsCrossed}
+              title="No sales yet"
+              description="Create some orders to see top sellers."
+            />
+          ) : (
+            <div className="space-y-3">
+              {topSellers.map((item, i) => {
+                const maxQty = topSellers[0].qty;
+                const pct = Math.round((item.qty / maxQty) * 100);
+                return (
+                  <div key={item.name}>
+                    <div className="flex items-center justify-between text-sm mb-1">
+                      <span className="text-gray-800 font-medium truncate">
+                        <span className="text-gray-400 mr-2">#{i + 1}</span>
+                        {item.name}
+                      </span>
+                      <span className="text-gray-500 shrink-0 ml-3">
+                        {item.qty} sold
+                      </span>
+                    </div>
+                    <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-brand-500 rounded-full transition-all"
+                        style={{ width: `${pct}%` }}
+                      />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </Card>
+
+        {/* Recent activity */}
+        <Card>
+          <CardHeader title="Recent activity" subtitle="Latest 6 orders" />
+          {recent.length === 0 ? (
+            <EmptyState
+              icon={ShoppingBag}
+              title="No orders yet"
+              description="New orders will appear here."
+            />
+          ) : (
+            <div className="space-y-2">
+              {recent.map((o) => (
                 <div
                   key={o.id}
-                  className="flex items-center justify-between border border-gray-200 rounded-lg p-3"
+                  className="flex items-center justify-between py-2 border-b border-gray-100 last:border-0"
                 >
-                  <div>
-                    <p className="font-medium text-gray-800">
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-gray-800">
                       Order #{o.id.slice(-4)}
                     </p>
                     <p className="text-xs text-gray-500">
-                      {minutesAgo(o.createdAt)} min ago •{" "}
+                      {minutesAgo(o.createdAt)}m ago •{" "}
                       {o.items.reduce((n, it) => n + it.qty, 0)} items
                     </p>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <Badge
-                      color={
-                        o.status === "paid"
-                          ? "purple"
-                          : o.status === "served"
-                            ? "green"
-                            : o.status === "preparing"
-                              ? "yellow"
-                              : o.status === "ready"
-                                ? "blue"
-                                : o.status === "cancelled"
-                                  ? "red"
-                                  : "gray"
-                      }
-                    >
+                  <div className="flex items-center gap-2 shrink-0">
+                    <Badge color={STATUS_COLOR[o.status] ?? "gray"}>
                       {o.status}
                     </Badge>
-                    <span className="font-semibold text-gray-800">
+                    <span className="text-sm font-semibold text-gray-800">
                       {formatCurrency(orderTotal(o))}
                     </span>
                   </div>
                 </div>
               ))}
-          </div>
-        )}
-      </Card>
+            </div>
+          )}
+        </Card>
+      </div>
     </>
   );
 }
